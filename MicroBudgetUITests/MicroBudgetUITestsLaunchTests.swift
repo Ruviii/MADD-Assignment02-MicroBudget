@@ -1,10 +1,3 @@
-//
-//  MicroBudgetUITestsLaunchTests.swift
-//  MicroBudgetUITests
-//
-//  Created by Sujana Dinuwara on 2025-11-16.
-//
-
 import XCTest
 
 final class MicroBudgetUITestsLaunchTests: XCTestCase {

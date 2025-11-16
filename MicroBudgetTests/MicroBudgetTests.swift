@@ -1,10 +1,3 @@
-//
-//  MicroBudgetTests.swift
-//  MicroBudgetTests
-//
-//  Created by Sujana Dinuwara on 2025-11-16.
-//
-
 import Testing
 @testable import MicroBudget
 
