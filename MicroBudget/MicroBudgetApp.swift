@@ -5,7 +5,9 @@ import SwiftData
 struct MicroBudgetApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            User.self,
+            EnvelopeModel.self,
+            TransactionModel.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -19,6 +21,11 @@ struct MicroBudgetApp: App {
     var body: some Scene {
         WindowGroup {
             AppCoordinator()
+                .onAppear {
+                    // Configure managers with ModelContext
+                    AuthManager.shared.setModelContext(sharedModelContainer.mainContext)
+                    DataManager.shared.setModelContext(sharedModelContainer.mainContext)
+                }
         }
         .modelContainer(sharedModelContainer)
     }

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AddEnvelope1View: View {
+    @ObservedObject private var dataManager = DataManager.shared
     @Binding var isPresented: Bool
     @State private var envelopeName = ""
     @State private var amount = ""
@@ -40,7 +41,7 @@ struct AddEnvelope1View: View {
             HStack(spacing: 12) {
                 // Save button
                 Button(action: {
-                    onSave(envelopeName, amount)
+                    handleSave()
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark")
@@ -73,6 +74,31 @@ struct AddEnvelope1View: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.primaryAccent, lineWidth: 2)
         )
+    }
+
+    // MARK: - Save Handler
+
+    private func handleSave() {
+        guard !envelopeName.isEmpty, let amountValue = Double(amount), amountValue > 0 else {
+            return
+        }
+
+        // Create envelope with default values
+        let envelope = EnvelopeModel(
+            name: envelopeName,
+            allocated: amountValue,
+            icon: "cart",
+            colorHex: "6666FF"  // Default purple color
+        )
+
+        // Save envelope
+        dataManager.addEnvelope(envelope)
+
+        // Call the callback
+        onSave(envelopeName, amount)
+
+        // Close the form
+        isPresented = false
     }
 }
 

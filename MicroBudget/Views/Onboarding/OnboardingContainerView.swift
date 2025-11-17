@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct OnboardingContainerView: View {
+    @ObservedObject private var authManager = AuthManager.shared
     @State private var currentPage = 0
     var onComplete: () -> Void
     var onSkip: () -> Void
@@ -20,7 +21,10 @@ struct OnboardingContainerView: View {
                         currentPage = 1
                     }
                 },
-                onSkip: onSkip
+                onSkip: {
+                    authManager.continueAsGuest()
+                    onSkip()
+                }
             )
             .tag(0)
 
@@ -30,13 +34,19 @@ struct OnboardingContainerView: View {
                         currentPage = 2
                     }
                 },
-                onSkip: onSkip
+                onSkip: {
+                    authManager.continueAsGuest()
+                    onSkip()
+                }
             )
             .tag(1)
 
             OnboardingPage3View(
                 onGetStarted: onComplete,
-                onSkip: onSkip
+                onSkip: {
+                    authManager.continueAsGuest()
+                    onSkip()
+                }
             )
             .tag(2)
         }

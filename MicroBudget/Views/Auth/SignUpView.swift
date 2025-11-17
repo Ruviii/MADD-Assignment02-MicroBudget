@@ -8,11 +8,14 @@
 import SwiftUI
 
 struct SignUpView: View {
+    @ObservedObject private var authManager = AuthManager.shared
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var showPassword = false
     @State private var savePasswordLocally = false
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     var onSignInTapped: () -> Void
     var onCreateAccountSuccess: () -> Void
@@ -157,8 +160,7 @@ struct SignUpView: View {
 
                     // Create Account button
                     Button(action: {
-                        // Handle create account
-                        onCreateAccountSuccess()
+                        handleSignUp()
                     }) {
                         Text("Create Account")
                             .font(.system(size: 16, weight: .semibold))
@@ -186,6 +188,25 @@ struct SignUpView: View {
                     .padding(.bottom, 40)
                 }
             }
+        }
+        .alert("Sign Up Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
+    }
+
+    // MARK: - Sign Up Handler
+
+    private func handleSignUp() {
+        let result = authManager.signUp(fullName: fullName, email: email, password: password)
+
+        switch result {
+        case .success:
+            onCreateAccountSuccess()
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+            showError = true
         }
     }
 }

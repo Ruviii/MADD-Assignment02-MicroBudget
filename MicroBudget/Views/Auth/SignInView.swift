@@ -8,9 +8,12 @@
 import SwiftUI
 
 struct SignInView: View {
+    @ObservedObject private var authManager = AuthManager.shared
     @State private var email = ""
     @State private var password = ""
     @State private var showPassword = false
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     var onSignUpTapped: () -> Void
     var onContinueAsGuest: () -> Void
@@ -121,8 +124,7 @@ struct SignInView: View {
 
                     // Sign In button
                     Button(action: {
-                        // Handle sign in
-                        onSignInSuccess()
+                        handleSignIn()
                     }) {
                         Text("Sign In")
                             .font(.system(size: 16, weight: .semibold))
@@ -154,7 +156,10 @@ struct SignInView: View {
                     .padding(.bottom, 24)
 
                     // Continue as guest
-                    Button(action: onContinueAsGuest) {
+                    Button(action: {
+                        authManager.continueAsGuest()
+                        onContinueAsGuest()
+                    }) {
                         Text("Continue as guest")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.secondaryText)
@@ -176,6 +181,25 @@ struct SignInView: View {
                     .padding(.bottom, 40)
                 }
             }
+        }
+        .alert("Sign In Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
+    }
+
+    // MARK: - Sign In Handler
+
+    private func handleSignIn() {
+        let result = authManager.signIn(email: email, password: password)
+
+        switch result {
+        case .success:
+            onSignInSuccess()
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+            showError = true
         }
     }
 }

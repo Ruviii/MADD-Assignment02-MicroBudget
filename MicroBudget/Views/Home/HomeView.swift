@@ -8,9 +8,19 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var totalBalance: Double = 560.00
-    @State private var predictedSpend: Double = 210
-    @State private var mae: Double = 12.5
+    @ObservedObject private var authManager = AuthManager.shared
+    @ObservedObject private var dataManager = DataManager.shared
+    @State private var predictedSpend: Double = 0
+    @State private var mae: Double = 0
+    @State private var hasSufficientData: Bool = false
+
+    var totalBalance: Double {
+        dataManager.getTotalBalance()
+    }
+
+    var recentTransactions: [TransactionModel] {
+        dataManager.getRecentTransactions(limit: 3)
+    }
 
     var body: some View {
         ZStack {
@@ -21,7 +31,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     // Header
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Good evening , Alex")
+                        Text(greetingText)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.primaryText)
 
@@ -42,41 +52,73 @@ struct HomeView: View {
                             .foregroundColor(.primaryText)
 
                         // Predicted spend card
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Predicted spend (7 days)")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.9))
+                        if hasSufficientData {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Predicted spend (7 days)")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.9))
 
-                                Text("$\(Int(predictedSpend))")
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.white)
+                                    Text("$\(String(format: "%.2f", predictedSpend))")
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+
+                                Spacer()
+
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    Text("MAE")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.9))
+
+                                    Text("$\(String(format: "%.2f", mae))")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
                             }
-
-                            Spacer()
-
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text("MAE")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.9))
-
-                                Text("\(String(format: "%.1f", mae))")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .padding(16)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.4, green: 0.4, blue: 1.0),
-                                    Color(red: 0.3, green: 0.8, blue: 0.9)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                            .padding(16)
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.4, green: 0.4, blue: 1.0),
+                                        Color(red: 0.3, green: 0.8, blue: 0.9)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                        )
-                        .cornerRadius(12)
+                            .cornerRadius(12)
+                        } else {
+                            // Insufficient data message
+                            VStack(spacing: 8) {
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.white.opacity(0.7))
+
+                                Text("Insufficient Data for Prediction")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white)
+
+                                Text("Add more transactions to see ML-powered spending forecasts")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 16)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 24)
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.4, green: 0.4, blue: 1.0),
+                                        Color(red: 0.3, green: 0.8, blue: 0.9)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(12)
+                        }
                     }
 
                     // Last 7 Days Chart
@@ -154,34 +196,32 @@ struct HomeView: View {
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.primaryText)
 
-                        VStack(spacing: 12) {
-                            TransactionRow(
-                                icon: "arrow.left.arrow.right",
-                                iconColor: .purple,
-                                title: "Salary Deposit",
-                                date: "Nov 16",
-                                amount: 296.00,
-                                isIncome: true
-                            )
+                        if recentTransactions.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "tray")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.secondaryText)
 
-                            TransactionRow(
-                                icon: "cart",
-                                iconColor: .green,
-                                title: "Whole Foods",
-                                date: "Nov 15",
-                                amount: 69.00,
-                                isIncome: false,
-                                hasAddButton: true
-                            )
-
-                            TransactionRow(
-                                icon: "fuelpump",
-                                iconColor: .orange,
-                                title: "Fuel Station",
-                                date: "Nov 14",
-                                amount: 81.00,
-                                isIncome: false
-                            )
+                                Text("No transactions yet")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.secondaryText)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 32)
+                        } else {
+                            VStack(spacing: 12) {
+                                ForEach(recentTransactions) { transaction in
+                                    TransactionRow(
+                                        icon: transaction.icon,
+                                        iconColor: transaction.color,
+                                        title: transaction.merchant,
+                                        date: formatDate(transaction.date),
+                                        amount: transaction.amount,
+                                        isIncome: transaction.isIncome,
+                                        hasAddButton: false
+                                    )
+                                }
+                            }
                         }
                     }
                     .padding(.bottom, 100) // Extra padding for bottom tab bar
@@ -189,6 +229,75 @@ struct HomeView: View {
                 .padding(.horizontal, 24)
             }
         }
+        .onAppear {
+            updatePredictions()
+        }
+        .onChange(of: dataManager.transactions) { oldValue, newValue in
+            updatePredictions()
+        }
+    }
+
+    // MARK: - ML Prediction
+
+    private func updatePredictions() {
+        let predictionService = SpendingPredictionService.shared
+
+        // Check if we have sufficient data (at least 7 days of transactions with expenses)
+        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        let recentExpenses = dataManager.transactions.filter { transaction in
+            !transaction.isIncome && transaction.date >= sevenDaysAgo
+        }
+
+        // Require at least 3 expense transactions in the last 7 days
+        if recentExpenses.count >= 3 {
+            hasSufficientData = true
+            let prediction = predictionService.getPrediction(transactions: dataManager.transactions)
+            predictedSpend = prediction.prediction
+            mae = prediction.mae
+        } else {
+            hasSufficientData = false
+            predictedSpend = 0
+            mae = 0
+        }
+    }
+
+    // MARK: - Computed Properties
+
+    private var greetingText: String {
+        let timeOfDay = getTimeOfDay()
+        let userName = getUserName()
+        return "\(timeOfDay), \(userName)"
+    }
+
+    private func getTimeOfDay() -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+
+        switch hour {
+        case 0..<12:
+            return "Good morning"
+        case 12..<17:
+            return "Good afternoon"
+        default:
+            return "Good evening"
+        }
+    }
+
+    private func getUserName() -> String {
+        if let user = authManager.currentUser {
+            // Extract first name from full name
+            let firstName = user.fullName.components(separatedBy: " ").first ?? user.fullName
+            return firstName
+        } else if authManager.isGuestMode {
+            return "Guest"
+        } else {
+            return "there"
+        }
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
     }
 }
 

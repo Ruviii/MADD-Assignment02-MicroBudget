@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject private var authManager = AuthManager.shared
     @State private var showSignOutAlert = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
@@ -48,11 +50,11 @@ struct SettingsView: View {
 
                             // User info
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Alex")
+                                Text(authManager.currentUser?.fullName ?? (authManager.isGuestMode ? "Guest" : "User"))
                                     .font(.system(size: 18, weight: .semibold))
                                     .foregroundColor(.primaryText)
 
-                                Text("alex@example.com")
+                                Text(authManager.currentUser?.email ?? (authManager.isGuestMode ? "Guest Mode" : "No email"))
                                     .font(.system(size: 14))
                                     .foregroundColor(.secondaryText)
                             }
@@ -134,11 +136,18 @@ struct SettingsView: View {
         .alert("Sign Out", isPresented: $showSignOutAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Sign Out", role: .destructive) {
-                // Handle sign out
+                handleSignOut()
             }
         } message: {
             Text("Are you sure you want to sign out?")
         }
+    }
+
+    // MARK: - Sign Out Handler
+
+    private func handleSignOut() {
+        authManager.signOut()
+        // The AppCoordinator will detect the auth state change and navigate to onboarding
     }
 }
 

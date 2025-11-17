@@ -15,8 +15,8 @@ enum AppScreen {
 }
 
 struct AppCoordinator: View {
+    @ObservedObject private var authManager = AuthManager.shared
     @State private var currentScreen: AppScreen = .onboarding
-    @State private var showOnboarding = true
 
     var body: some View {
         Group {
@@ -56,6 +56,20 @@ struct AppCoordinator: View {
 
             case .mainApp:
                 MainTabView()
+            }
+        }
+        .onAppear {
+            // Check authentication state on launch
+            if authManager.isAuthenticated {
+                currentScreen = .mainApp
+            } else {
+                currentScreen = .onboarding
+            }
+        }
+        .onChange(of: authManager.isAuthenticated) { oldValue, newValue in
+            // Handle authentication state changes (e.g., sign out)
+            if !newValue {
+                currentScreen = .onboarding
             }
         }
     }

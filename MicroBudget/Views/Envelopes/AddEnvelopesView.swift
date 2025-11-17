@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AddEnvelopesView: View {
+    @ObservedObject private var dataManager = DataManager.shared
     @Binding var isPresented: Bool
     @State private var envelopeName = ""
     @State private var allocatedAmount = "0.00"
@@ -15,6 +16,8 @@ struct AddEnvelopesView: View {
     @State private var selectedColorIndex = 0
     @State private var selectedIconIndex = 0
     @State private var goalAmount = ""
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     let colors: [Color] = [
         Color(red: 0.4, green: 0.4, blue: 1.0),   // Purple
@@ -169,8 +172,7 @@ struct AddEnvelopesView: View {
                         // Buttons
                         HStack(spacing: 16) {
                             Button(action: {
-                                // Create envelope
-                                isPresented = false
+                                handleCreateEnvelope()
                             }) {
                                 Text("Create Envelope")
                                     .font(.system(size: 16, weight: .semibold))
@@ -196,6 +198,58 @@ struct AddEnvelopesView: View {
                 }
             }
         }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
+    }
+
+    // MARK: - Create Envelope Handler
+
+    private func handleCreateEnvelope() {
+        // Validate inputs
+        guard !envelopeName.isEmpty else {
+            errorMessage = "Please enter an envelope name"
+            showError = true
+            return
+        }
+
+        guard let amount = Double(allocatedAmount), amount > 0 else {
+            errorMessage = "Please enter a valid allocated amount"
+            showError = true
+            return
+        }
+
+        let goal = Double(goalAmount)
+
+        // Create envelope
+        let envelope = EnvelopeModel(
+            name: envelopeName,
+            allocated: amount,
+            icon: icons[selectedIconIndex],
+            colorHex: colors[selectedColorIndex].toHex(),
+            goal: goal
+        )
+
+        // Save envelope
+        dataManager.addEnvelope(envelope)
+
+        // Create initial transaction if requested
+        if seedWithTransaction {
+            let transaction = TransactionModel(
+                merchant: "Initial Balance - \(envelopeName)",
+                amount: amount,
+                isIncome: true,
+                envelope: envelope,
+                icon: icons[selectedIconIndex],
+                colorHex: colors[selectedColorIndex].toHex()
+            )
+            dataManager.addTransaction(transaction)
+        }
+
+        // Close modal
+        isPresented = false
     }
 }
 

@@ -8,14 +8,11 @@
 import SwiftUI
 
 struct EnvelopesView: View {
+    @ObservedObject private var dataManager = DataManager.shared
     @State private var showAddEnvelopesModal = false
     @State private var showAddEnvelope1Form = false
-    @State private var envelopes: [Envelope] = [
-        Envelope(name: "Grocerie", icon: "cart", color: .green, allocated: 300, spent: 160),
-        Envelope(name: "Transpo", icon: "car", color: .purple, allocated: 100, spent: 40),
-        Envelope(name: "Savings", icon: "bag", color: .orange, allocated: 500, spent: 180),
-        Envelope(name: "Entertain", icon: "ticket", color: .pink, allocated: 120, spent: 80)
-    ]
+    @State private var showAddTransaction = false
+    @State private var selectedEnvelopeForTransaction: EnvelopeModel?
 
     var body: some View {
         ZStack {
@@ -73,13 +70,45 @@ struct EnvelopesView: View {
                 .padding(.bottom, 20)
 
                 // Envelopes List
-                ScrollView {
+                if dataManager.envelopes.isEmpty {
                     VStack(spacing: 16) {
-                        ForEach(envelopes) { envelope in
-                            EnvelopeCard(envelope: envelope)
-                        }
+                        Spacer()
+
+                        Image(systemName: "tray")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondaryText)
+
+                        Text("No Envelopes Yet")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primaryText)
+
+                        Text("Create your first envelope to start tracking your budget")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+
+                        Spacer()
                     }
-                    .padding(.horizontal, 24)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ForEach(dataManager.envelopes) { envelope in
+                                EnvelopeCard(
+                                    envelope: envelope,
+                                    spent: dataManager.getSpentAmount(for: envelope),
+                                    onAddTransaction: {
+                                        selectedEnvelopeForTransaction = envelope
+                                        showAddTransaction = true
+                                    }
+                                )
+                            }
+                            .onMove { source, destination in
+                                moveEnvelope(from: source, to: destination)
+                            }
+                        }
+                        .padding(.horizontal, 24)
+                    }
                 }
 
                 Spacer()
@@ -112,11 +141,31 @@ struct EnvelopesView: View {
         .sheet(isPresented: $showAddEnvelopesModal) {
             AddEnvelopesView(isPresented: $showAddEnvelopesModal)
         }
+        .sheet(isPresented: $showAddTransaction) {
+            AddTransactionViewWithEnvelope(
+                isPresented: $showAddTransaction,
+                preselectedEnvelope: selectedEnvelopeForTransaction
+            )
+        }
+    }
+
+    private func moveEnvelope(from source: IndexSet, to destination: Int) {
+        dataManager.moveEnvelope(from: source, to: destination)
     }
 }
 
 struct EnvelopeCard: View {
-    let envelope: Envelope
+    let envelope: EnvelopeModel
+    let spent: Double
+    var onAddTransaction: () -> Void = {}
+
+    var percentage: Double {
+        envelope.allocated > 0 ? (spent / envelope.allocated) * 100 : 0
+    }
+
+    var remaining: Double {
+        envelope.allocated - spent
+    }
 
     var body: some View {
         HStack(spacing: 16) {
@@ -132,12 +181,12 @@ struct EnvelopeCard: View {
                     .frame(width: 60, height: 60)
 
                 Circle()
-                    .trim(from: 0, to: envelope.percentage / 100)
+                    .trim(from: 0, to: min(percentage / 100, 1.0))
                     .stroke(envelope.color, lineWidth: 6)
                     .frame(width: 60, height: 60)
                     .rotationEffect(.degrees(-90))
 
-                Text("\(Int(envelope.percentage)) %")
+                Text("\(Int(percentage)) %")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.primaryText)
             }
@@ -166,11 +215,11 @@ struct EnvelopeCard: View {
                     .font(.system(size: 12))
                     .foregroundColor(.secondaryText)
 
-                Text("$\(String(format: "%.2f", envelope.spent))")
+                Text("$\(String(format: "%.2f", spent))")
                     .font(.system(size: 12))
                     .foregroundColor(.secondaryText)
 
-                Text("$\(String(format: "%.2f", envelope.remaining))")
+                Text("$\(String(format: "%.2f", remaining))")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.green)
 
@@ -184,7 +233,7 @@ struct EnvelopeCard: View {
             // Action buttons
             VStack(spacing: 16) {
                 Button(action: {
-                    // Add transaction
+                    onAddTransaction()
                 }) {
                     Image(systemName: "plus")
                         .foregroundColor(.green)
@@ -206,21 +255,16 @@ struct EnvelopeCard: View {
     }
 }
 
-// Envelope model
-struct Envelope: Identifiable {
-    let id = UUID()
-    let name: String
-    let icon: String
-    let color: Color
-    let allocated: Double
-    let spent: Double
+// Wrapper view to pass preselected envelope to AddTransactionView
+struct AddTransactionViewWithEnvelope: View {
+    @Binding var isPresented: Bool
+    var preselectedEnvelope: EnvelopeModel?
 
-    var remaining: Double {
-        allocated - spent
-    }
-
-    var percentage: Double {
-        allocated > 0 ? (spent / allocated) * 100 : 0
+    var body: some View {
+        AddTransactionViewWithPreselection(
+            isPresented: $isPresented,
+            preselectedEnvelope: preselectedEnvelope
+        )
     }
 }
 

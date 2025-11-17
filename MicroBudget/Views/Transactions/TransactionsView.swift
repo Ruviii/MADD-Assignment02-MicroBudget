@@ -8,33 +8,24 @@
 import SwiftUI
 
 struct TransactionsView: View {
+    @ObservedObject private var dataManager = DataManager.shared
     @State private var showAddTransaction = false
     @State private var searchText = ""
 
-    // Sample data grouped by date
-    let transactionsByDate: [(String, [Transaction])] = [
-        ("November 16, 2025", [
-            Transaction(merchant: "Salary Deposit", amount: 2500, isIncome: true, icon: "arrow.left.arrow.right", iconColor: .purple),
-            Transaction(merchant: "Whole Foods", amount: 69.00, isIncome: false, icon: "cart", iconColor: .green),
-            Transaction(merchant: "Target Store", amount: 45.00, isIncome: false, icon: "cart", iconColor: .green)
-        ]),
-        ("November 15, 2025", [
-            Transaction(merchant: "Fuel Station", amount: 81.00, isIncome: false, icon: "fuelpump", iconColor: .orange),
-            Transaction(merchant: "Cafe Bistro", amount: 12.50, isIncome: false, icon: "cup.and.saucer", iconColor: .pink)
-        ]),
-        ("November 14, 2025", [
-            Transaction(merchant: "Netflix", amount: 15.99, isIncome: false, icon: "tv", iconColor: .red),
-            Transaction(merchant: "Uber", amount: 23.00, isIncome: false, icon: "car", iconColor: .purple)
-        ]),
-        ("November 13, 2025", [
-            Transaction(merchant: "Freelance Work", amount: 450.00, isIncome: true, icon: "briefcase", iconColor: .blue),
-            Transaction(merchant: "Restaurant", amount: 67.00, isIncome: false, icon: "fork.knife", iconColor: .orange)
-        ]),
-        ("November 12, 2025", [
-            Transaction(merchant: "Grocery Store", amount: 89.00, isIncome: false, icon: "cart", iconColor: .green),
-            Transaction(merchant: "Pharmacy", amount: 34.50, isIncome: false, icon: "cross.case", iconColor: .red)
-        ])
-    ]
+    var filteredTransactionsByDate: [(String, [TransactionModel])] {
+        let filtered = searchText.isEmpty ? dataManager.transactions : dataManager.transactions.filter {
+            $0.merchant.lowercased().contains(searchText.lowercased())
+        }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM d, yyyy"
+
+        let grouped = Dictionary(grouping: filtered.sorted { $0.date > $1.date }) { transaction in
+            dateFormatter.string(from: transaction.date)
+        }
+
+        return grouped.sorted { $0.key > $1.key }
+    }
 
     var body: some View {
         ZStack {
@@ -107,27 +98,67 @@ struct TransactionsView: View {
                 .padding(.bottom, 20)
 
                 // Transactions list
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        ForEach(transactionsByDate, id: \.0) { dateGroup in
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Date header
-                                Text(dateGroup.0)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.secondaryText)
-                                    .padding(.horizontal, 24)
+                if dataManager.transactions.isEmpty {
+                    VStack(spacing: 16) {
+                        Spacer()
 
-                                // Transactions for this date
-                                VStack(spacing: 8) {
-                                    ForEach(dateGroup.1) { transaction in
-                                        TransactionListRow(transaction: transaction)
+                        Image(systemName: "list.bullet.rectangle")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondaryText)
+
+                        Text("No Transactions Yet")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primaryText)
+
+                        Text("Add your first transaction to start tracking your expenses")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+
+                        Spacer()
+                    }
+                } else if filteredTransactionsByDate.isEmpty {
+                    VStack(spacing: 16) {
+                        Spacer()
+
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondaryText)
+
+                        Text("No Results Found")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primaryText)
+
+                        Text("Try searching with different keywords")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondaryText)
+
+                        Spacer()
+                    }
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            ForEach(filteredTransactionsByDate, id: \.0) { dateGroup in
+                                VStack(alignment: .leading, spacing: 12) {
+                                    // Date header
+                                    Text(dateGroup.0)
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.secondaryText)
+                                        .padding(.horizontal, 24)
+
+                                    // Transactions for this date
+                                    VStack(spacing: 8) {
+                                        ForEach(dateGroup.1) { transaction in
+                                            TransactionListRow(transaction: transaction)
+                                        }
                                     }
+                                    .padding(.horizontal, 24)
                                 }
-                                .padding(.horizontal, 24)
                             }
                         }
+                        .padding(.bottom, 100) // Extra padding for tab bar
                     }
-                    .padding(.bottom, 100) // Extra padding for tab bar
                 }
             }
         }
@@ -138,7 +169,7 @@ struct TransactionsView: View {
 }
 
 struct TransactionListRow: View {
-    let transaction: Transaction
+    let transaction: TransactionModel
 
     var body: some View {
         HStack(spacing: 16) {
@@ -149,7 +180,7 @@ struct TransactionListRow: View {
                     .frame(width: 44, height: 44)
 
                 Image(systemName: transaction.icon)
-                    .foregroundColor(transaction.iconColor)
+                    .foregroundColor(transaction.color)
                     .font(.system(size: 18))
             }
 
@@ -177,18 +208,6 @@ struct TransactionListRow: View {
         .background(Color(red: 0.08, green: 0.10, blue: 0.13))
         .cornerRadius(12)
     }
-}
-
-// Transaction model
-struct Transaction: Identifiable {
-    let id = UUID()
-    let merchant: String
-    let amount: Double
-    let isIncome: Bool
-    let icon: String
-    let iconColor: Color
-    var note: String? = nil
-    var envelope: String? = nil
 }
 
 #Preview {
