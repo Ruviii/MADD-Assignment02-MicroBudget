@@ -1,24 +1,54 @@
-# MicroBudget
+# 💰 MicroBudget
 
-A modern iOS budget tracking app with ML-powered spending predictions built using SwiftUI and SwiftData.
+<div align="center">
 
-## Features
+![MicroBudget](https://img.shields.io/badge/MicroBudget-iOS_Budget_App-blue?style=for-the-badge)
+[![iOS](https://img.shields.io/badge/iOS-17.0+-black?style=for-the-badge&logo=apple&logoColor=white)](https://www.apple.com/ios)
+[![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=for-the-badge&logo=swift&logoColor=white)](https://swift.org/)
+[![SwiftUI](https://img.shields.io/badge/SwiftUI-Latest-blue?style=for-the-badge)](https://developer.apple.com/xcode/swiftui/)
 
-- **User Authentication**: Secure login and signup with SHA256 password hashing
-- **Envelope Budgeting**: Create and manage budget envelopes with spending limits
-- **Transaction Tracking**: Record income and expenses with category icons
-- **ML Predictions**: 7-day spending forecasts using Core ML with linear regression fallback
-- **Insights Dashboard**: Visualize spending trends, savings rate, and model performance
-- **Multi-User Support**: Each user has isolated data with SwiftData persistence
-- **Guest Mode**: Try the app without creating an account
+**A modern iOS budget tracking app with ML-powered spending predictions built using SwiftUI and SwiftData.**
 
-## Requirements
+[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Screenshots](#-screenshots)
+
+</div>
+
+---
+
+## ✨ Features
+
+- 🔐 **User Authentication**: Secure login and signup with SHA256 password hashing
+- ✉️ **Envelope Budgeting**: Create and manage budget envelopes with spending limits
+- 💰 **Transaction Tracking**: Record income and expenses with category icons
+- 🤖 **ML Predictions**: 7-day spending forecasts using Core ML with linear regression fallback
+- 📊 **Insights Dashboard**: Visualize spending trends, savings rate, and model performance
+- 👥 **Multi-User Support**: Each user has isolated data with SwiftData persistence
+- 🎭 **Guest Mode**: Try the app without creating an account
+- 🔒 **Privacy-First**: 100% on-device processing, no cloud sync required
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+| Document | Description |
+|----------|-------------|
+| [💡 **Motivation**](./docs/MOTIVATION.md) | Why MicroBudget? Vision, design philosophy, and roadmap |
+| [🛠️ **Development Guide**](./docs/DEVELOPMENT.md) | Setup, workflow, Core ML integration, and contributing |
+| [🔧 **Technologies**](./docs/TECHNOLOGIES.md) | Tech stack, frameworks, and architecture patterns |
+| [🏗️ **Architecture**](./docs/ARCHITECTURE.md) | MVVM pattern, data flow, and system design |
+| [✨ **Features**](./docs/FEATURES.md) | In-depth feature documentation and usage guides |
+
+---
+
+## 🚀 Quick Start
+
+### Requirements
 
 - **Xcode**: 15.0 or later
 - **iOS**: 17.0 or later
 - **macOS**: Sonoma (14.0) or later
 
-## Installation & Setup
+### Installation & Setup
 
 1. **Clone or download the project**
    ```bash
@@ -38,46 +68,60 @@ A modern iOS budget tracking app with ML-powered spending predictions built usin
    - Wait for the build to complete
    - The app will launch in the simulator
 
-## Running the App
+---
+
+## 📱 Using the App
 
 ### First Launch
-1. Complete the onboarding screens
-2. Create an account or continue as guest
-3. Start adding envelopes and transactions
+1. 🚀 Complete the 3-screen onboarding experience
+2. 🔐 Create an account or continue as guest
+3. ✉️ Add budget envelopes (e.g., Groceries, Transport)
+4. 💰 Start tracking transactions
 
-### Using Predictions
-- The ML prediction feature requires at least **3 expense transactions** in the last 7 days
-- Add transactions to see the 7-day spending forecast on the Home and Insights screens
+### ML Predictions
+- Requires at least **3 expense transactions** in the last 7 days
+- View 7-day spending forecasts on Home and Insights screens
+- See prediction accuracy with MAE (Mean Absolute Error) metrics
 
-## Core ML Integration (Optional)
+---
 
-The app includes a fallback linear regression model. To integrate a trained Core ML model:
+## 📸 Screenshots
 
-1. **Train your model** using Create ML or Python with the following features:
-   - `last_7_days_spending`
-   - `last_14_days_spending`
-   - `last_30_days_spending`
-   - `avg_daily_last_7`
-   - `avg_daily_last_14`
-   - `avg_daily_last_30`
-   - `day_of_week`
-   - `day_of_month`
-   - `transaction_count_7_days`
+> *Coming soon - Add screenshots of the app here*
 
-2. **Add the .mlmodel file** to Xcode:
-   - Drag the `.mlmodel` file into the project navigator
-   - Ensure "Copy items if needed" is checked
+---
 
-3. **Update SpendingPredictionService.swift**:
-   - Uncomment the Core ML integration code in the `predictWithCoreML()` method (lines 148-182)
-   - Update the model class name to match your `.mlmodel` file name
+## 🤖 Core ML Integration
 
-## Project Structure
+The app includes a **fallback linear regression model** that works out of the box. To integrate a custom trained Core ML model:
+
+### Quick Steps
+
+1. **Train your model** using Create ML or Python
+2. **Drag `.mlmodel` file** into Xcode project
+3. **Build and run** - No code changes needed!
+
+The app automatically tries Core ML first, then falls back to linear regression if unavailable.
+
+### Model Requirements
+
+**Input features (9 dimensions):**
+- `last_7_days_spending`, `last_14_days_spending`, `last_30_days_spending`
+- `avg_daily_last_7`, `avg_daily_last_14`, `avg_daily_last_30`
+- `day_of_week`, `day_of_month`, `transaction_count_7_days`
+
+**Output:** `predicted_spending` (Double)
+
+For detailed ML integration guide, see [Development Documentation](./docs/DEVELOPMENT.md#-core-ml-integration).
+
+---
+
+## 📂 Project Structure
 
 ```
 MicroBudget/
-├── Models/              # SwiftData models (User, EnvelopeModel, TransactionModel)
-├── Views/               # SwiftUI views organized by feature
+├── 📊 Models/              # SwiftData models (User, EnvelopeModel, TransactionModel)
+├── 🎨 Views/               # SwiftUI views organized by feature
 │   ├── Onboarding/
 │   ├── Auth/
 │   ├── Home/
@@ -85,37 +129,73 @@ MicroBudget/
 │   ├── Transactions/
 │   ├── Insights/
 │   └── Settings/
-├── Managers/            # State management (AuthManager, DataManager)
-├── Services/            # ML prediction service
-└── Utilities/           # Shared components and extensions
+├── 🎛️ Services/            # Business logic (AuthManager, DataManager, ML)
+├── 🎨 Extensions/          # Color helpers and utilities
+├── 🤖 SpendingPredictor.mlmodel  # Core ML model
+└── 📚 docs/                # Comprehensive documentation
 ```
 
-## Troubleshooting
+For detailed architecture, see [Architecture Documentation](./docs/ARCHITECTURE.md).
 
-### Can't log in after rebuilding the app?
-Delete the app from the simulator and rebuild:
-- Long press the app icon in simulator
-- Click the "X" to delete
-- Rebuild and run
+---
 
-### Predictions not showing?
-Make sure you have:
-- At least 3 expense transactions in the last 7 days
-- Transactions with dates within the recent period
+## 🔧 Troubleshooting
 
-### Build errors?
-- Clean the build folder: `⌘ + Shift + K`
-- Restart Xcode
-- Ensure you're using Xcode 15+ with iOS 17+ deployment target
+| Issue | Solution |
+|-------|----------|
+| **Can't log in after rebuild** | Delete app from simulator, then rebuild |
+| **Predictions not showing** | Add 3+ expense transactions in last 7 days |
+| **Build errors** | Clean build folder (`⌘ + Shift + K`), restart Xcode |
+| **Database errors** | Delete app from simulator to reset database |
 
-## Technologies Used
+For more troubleshooting tips, see [Development Guide](./docs/DEVELOPMENT.md#-troubleshooting).
 
-- **SwiftUI**: Modern declarative UI framework
-- **SwiftData**: Apple's persistence framework
-- **Core ML**: On-device machine learning
-- **CryptoKit**: Secure password hashing
-- **Combine**: Reactive programming for state management
+---
 
-## License
+## 🔧 Technologies Used
+
+| Technology | Purpose |
+|------------|---------|
+| **SwiftUI** | Modern declarative UI framework |
+| **SwiftData** | Apple's persistence framework |
+| **Core ML** | On-device machine learning |
+| **CryptoKit** | Secure password hashing (SHA-256) |
+| **Combine** | Reactive programming for state management |
+
+For detailed technology documentation, see [Technologies Guide](./docs/TECHNOLOGIES.md).
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see the [Development Guide](./docs/DEVELOPMENT.md#-contributing-guidelines) for:
+
+- Code style guidelines
+- Commit message conventions
+- Pull request process
+- Testing requirements
+
+---
+
+## 📄 License
 
 This project is for educational purposes.
+
+---
+
+## 🙏 Acknowledgments
+
+Built with:
+- [SwiftUI](https://developer.apple.com/xcode/swiftui/) by Apple
+- [Core ML](https://developer.apple.com/documentation/coreml) by Apple
+- [SF Symbols](https://developer.apple.com/sf-symbols/) for icons
+
+---
+
+<div align="center">
+
+**Made with ❤️ for iOS developers and budget-conscious individuals**
+
+[Documentation](./docs/MOTIVATION.md) • [Report Bug](https://github.com/yourusername/microbudget/issues) • [Request Feature](https://github.com/yourusername/microbudget/issues)
+
+</div>
