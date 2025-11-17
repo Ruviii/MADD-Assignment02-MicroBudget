@@ -12,7 +12,7 @@ struct EnvelopesView: View {
     @State private var showAddEnvelopesModal = false
     @State private var showAddEnvelope1Form = false
     @State private var showAddTransaction = false
-    @State private var selectedEnvelopeForTransaction: EnvelopeModel?
+    @State private var selectedEnvelopeId: UUID?
 
     var body: some View {
         ZStack {
@@ -98,7 +98,7 @@ struct EnvelopesView: View {
                                     envelope: envelope,
                                     spent: dataManager.getSpentAmount(for: envelope),
                                     onAddTransaction: {
-                                        selectedEnvelopeForTransaction = envelope
+                                        selectedEnvelopeId = envelope.id
                                         showAddTransaction = true
                                     }
                                 )
@@ -142,9 +142,9 @@ struct EnvelopesView: View {
             AddEnvelopesView(isPresented: $showAddEnvelopesModal)
         }
         .sheet(isPresented: $showAddTransaction) {
-            AddTransactionViewWithEnvelope(
+            AddTransactionViewWithPreselection(
                 isPresented: $showAddTransaction,
-                preselectedEnvelope: selectedEnvelopeForTransaction
+                preselectedEnvelopeId: selectedEnvelopeId
             )
         }
     }
@@ -252,19 +252,6 @@ struct EnvelopeCard: View {
         .padding(16)
         .background(Color(red: 0.08, green: 0.10, blue: 0.13))
         .cornerRadius(12)
-    }
-}
-
-// Wrapper view to pass preselected envelope to AddTransactionView
-struct AddTransactionViewWithEnvelope: View {
-    @Binding var isPresented: Bool
-    var preselectedEnvelope: EnvelopeModel?
-
-    var body: some View {
-        AddTransactionViewWithPreselection(
-            isPresented: $isPresented,
-            preselectedEnvelope: preselectedEnvelope
-        )
     }
 }
 

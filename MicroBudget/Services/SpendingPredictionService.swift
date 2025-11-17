@@ -92,7 +92,7 @@ class SpendingPredictionService {
     // MARK: - Feature Extraction for ML
 
     /// Extract features from transaction history for ML model
-    func extractFeatures(transactions: [TransactionModel]) -> [String: Double] {
+    func extractFeatures(transactions: [TransactionModel]) -> [String: Any] {
         let calendar = Calendar.current
         let now = Date()
 
@@ -122,6 +122,17 @@ class SpendingPredictionService {
         // Transaction count
         let transactionCount7Days = Double(expenses.filter { $0.date >= last7Days }.count)
 
+        // Categorical feature: segment based on average daily spending
+        // Adjust these thresholds based on your data
+        let segment: String
+        if avgDailyLast7 < 20 {
+            segment = "low"
+        } else if avgDailyLast7 < 50 {
+            segment = "mid"
+        } else {
+            segment = "high"
+        }
+
         return [
             "last_7_days_spending": last7DaysSpending,
             "last_14_days_spending": last14DaysSpending,
@@ -131,7 +142,8 @@ class SpendingPredictionService {
             "avg_daily_last_30": avgDailyLast30,
             "day_of_week": dayOfWeek,
             "day_of_month": dayOfMonth,
-            "transaction_count_7_days": transactionCount7Days
+            "transaction_count_7_days": transactionCount7Days,
+            "segment": segment  // Categorical feature expected by the model
         ]
     }
 
@@ -139,50 +151,55 @@ class SpendingPredictionService {
 
     /// Predict using Core ML model (when available)
     func predictWithCoreML(transactions: [TransactionModel]) -> (prediction: Double, mae: Double)? {
-        // TODO: Add your trained Core ML model here
-        // Steps to integrate:
-        // 1. Train model using Create ML or Python (see instructions below)
-        // 2. Drag .mlmodel file into Xcode
-        // 3. Uncomment and update the code below
-
-        /*
-        Example integration when you have a .mlmodel file:
-
         do {
             // Initialize your Core ML model
-            let model = try SpendingPredictorModel(configuration: MLModelConfiguration())
+            let config = MLModelConfiguration()
+            let model = try SpendingPredictor(configuration: config)
 
             // Extract features
             let features = extractFeatures(transactions: transactions)
 
-            // Create input for the model
-            let input = try SpendingPredictorModelInput(
-                last_7_days_spending: features["last_7_days_spending"] ?? 0,
-                last_14_days_spending: features["last_14_days_spending"] ?? 0,
-                last_30_days_spending: features["last_30_days_spending"] ?? 0,
-                avg_daily_last_7: features["avg_daily_last_7"] ?? 0,
-                avg_daily_last_14: features["avg_daily_last_14"] ?? 0,
-                avg_daily_last_30: features["avg_daily_last_30"] ?? 0,
-                day_of_week: features["day_of_week"] ?? 0,
-                day_of_month: features["day_of_month"] ?? 0,
-                transaction_count_7_days: features["transaction_count_7_days"] ?? 0
-            )
+            // Debug: Print model input description
+            print("🔍 Model expects these inputs:")
+            for inputDesc in model.model.modelDescription.inputDescriptionsByName {
+                print("  - \(inputDesc.key): \(inputDesc.value.type)")
+            }
 
-            // Get prediction
-            let output = try model.prediction(input: input)
+            print("🔍 We are providing these features:")
+            for feature in features {
+                print("  - \(feature.key): \(feature.value)")
+            }
 
-            // Return prediction and MAE
-            // Note: Your model should output 'predicted_spending' and optionally 'mae'
-            return (prediction: output.predicted_spending, mae: output.mae ?? calculateMAE(transactions: transactions))
+            // Use features directly (now includes categorical features)
+            let provider = try MLDictionaryFeatureProvider(dictionary: features)
+
+            // Get prediction using the underlying MLModel
+            let output = try model.model.prediction(from: provider)
+
+            // Extract the prediction value (try common output names)
+            var predictionValue: Double = 0
+            if let value = output.featureValue(for: "predicted_spending")?.doubleValue {
+                predictionValue = value
+            } else if let value = output.featureValue(for: "target")?.doubleValue {
+                predictionValue = value
+            } else if let value = output.featureValue(for: "prediction")?.doubleValue {
+                predictionValue = value
+            } else {
+                // If none of the common names work, try the first feature
+                if let firstFeature = output.featureNames.first,
+                   let value = output.featureValue(for: firstFeature)?.doubleValue {
+                    predictionValue = value
+                    print("📊 Using output feature: \(firstFeature)")
+                }
+            }
+
+            // Return prediction with calculated MAE
+            return (prediction: predictionValue, mae: calculateMAE(transactions: transactions))
 
         } catch {
             print("❌ Core ML prediction failed: \(error)")
             return nil
         }
-        */
-
-        // Return nil to use fallback prediction
-        return nil
     }
 
     // MARK: - Public Prediction Method

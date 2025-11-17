@@ -140,9 +140,15 @@ class DataManager: ObservableObject {
 
     func getSpentAmount(for envelope: EnvelopeModel) -> Double {
         let envelopeTransactions = envelope.transactions ?? []
-        return envelopeTransactions
+        // Calculate net amount: income adds to envelope, expenses subtract
+        let income = envelopeTransactions
+            .filter { $0.isIncome }
+            .reduce(0) { $0 + $1.amount }
+        let expenses = envelopeTransactions
             .filter { !$0.isIncome }
             .reduce(0) { $0 + $1.amount }
+        // Return net spent (expenses - income allocated to this envelope)
+        return expenses - income
     }
 
     // MARK: - Analytics

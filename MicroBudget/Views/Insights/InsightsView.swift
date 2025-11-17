@@ -181,18 +181,27 @@ struct InsightsView: View {
                     // ML Models Section
                     if hasSufficientData {
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Prediction Models")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primaryText)
+                            HStack {
+                                Text("Prediction Models")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.primaryText)
+
+                                Spacer()
+
+                                Text("7-Day Forecast")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.secondaryText)
+                            }
 
                             // CoreML Model (if available)
                             if mlPrediction > 0 {
                                 ModelCard(
-                                    modelName: "CoreML Model",
+                                    modelName: "Core ML Model",
                                     mae: mlMAE,
                                     prediction: mlPrediction,
                                     accentColor: .green,
-                                    status: "Active"
+                                    status: "Active",
+                                    modelDescription: "Neural network trained on your spending patterns"
                                 )
                             }
 
@@ -202,8 +211,31 @@ struct InsightsView: View {
                                 mae: fallbackMAE,
                                 prediction: fallbackPrediction,
                                 accentColor: mlPrediction > 0 ? .orange : .green,
-                                status: mlPrediction > 0 ? "Backup" : "Active"
+                                status: mlPrediction > 0 ? "Backup" : "Active",
+                                modelDescription: "Statistical model using trend analysis"
                             )
+
+                            // Model comparison info (if both models are available)
+                            if mlPrediction > 0 && fallbackPrediction > 0 {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "info.circle")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.blue)
+
+                                    Text("Difference: $\(String(format: "%.2f", abs(mlPrediction - fallbackPrediction)))")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondaryText)
+
+                                    Spacer()
+
+                                    Text("Better accuracy: \(mlMAE < fallbackMAE ? "Core ML" : "Linear")")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(mlMAE < fallbackMAE ? .green : .orange)
+                                }
+                                .padding(12)
+                                .background(Color(red: 0.08, green: 0.10, blue: 0.13))
+                                .cornerRadius(8)
+                            }
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 16) {
@@ -365,42 +397,58 @@ struct ModelCard: View {
     let prediction: Double
     let accentColor: Color
     var status: String = "Active"
+    var modelDescription: String = ""
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(red: 0.08, green: 0.10, blue: 0.13))
 
-            HStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Text(modelName)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primaryText)
+            VStack(spacing: 0) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Text(modelName)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.primaryText)
 
-                        Text(status)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(status == "Active" ? .green : .orange)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill((status == "Active" ? Color.green : Color.orange).opacity(0.2))
-                            )
+                            Text(status)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(status == "Active" ? .green : .orange)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill((status == "Active" ? Color.green : Color.orange).opacity(0.2))
+                                )
+                        }
+
+                        if !modelDescription.isEmpty {
+                            Text(modelDescription)
+                                .font(.system(size: 11))
+                                .foregroundColor(.tertiaryText)
+                                .lineLimit(2)
+                        }
+
+                        Text("MAE: $\(String(format: "%.2f", mae))")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondaryText)
                     }
 
-                    Text("MAE: $\(String(format: "%.2f", mae))")
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondaryText)
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("$\(String(format: "%.2f", prediction))")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(accentColor)
+
+                        Text("predicted")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondaryText)
+                    }
                 }
-
-                Spacer()
-
-                Text("$\(String(format: "%.2f", prediction))")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(accentColor)
+                .padding()
             }
-            .padding()
         }
     }
 }
