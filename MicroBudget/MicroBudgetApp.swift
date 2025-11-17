@@ -18,7 +18,7 @@ struct MicroBudgetApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppCoordinator()
         }
         .modelContainer(sharedModelContainer)
     }
