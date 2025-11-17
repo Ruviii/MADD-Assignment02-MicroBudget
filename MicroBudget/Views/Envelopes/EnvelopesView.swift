@@ -1,9 +1,3 @@
-//
-//  EnvelopesView.swift
-//  MicroBudget
-//
-//  Created by Sujana Dinuwara on 2025-11-17.
-//
 
 import SwiftUI
 
@@ -12,7 +6,7 @@ struct EnvelopesView: View {
     @State private var showAddEnvelopesModal = false
     @State private var showAddEnvelope1Form = false
     @State private var showAddTransaction = false
-    @State private var selectedEnvelopeId: UUID?
+    @State private var selectedEnvelopeForTransaction: EnvelopeModel?
 
     var body: some View {
         ZStack {
@@ -98,7 +92,7 @@ struct EnvelopesView: View {
                                     envelope: envelope,
                                     spent: dataManager.getSpentAmount(for: envelope),
                                     onAddTransaction: {
-                                        selectedEnvelopeId = envelope.id
+                                        selectedEnvelopeForTransaction = envelope
                                         showAddTransaction = true
                                     }
                                 )
@@ -142,9 +136,9 @@ struct EnvelopesView: View {
             AddEnvelopesView(isPresented: $showAddEnvelopesModal)
         }
         .sheet(isPresented: $showAddTransaction) {
-            AddTransactionViewWithPreselection(
+            AddTransactionViewWithEnvelope(
                 isPresented: $showAddTransaction,
-                preselectedEnvelopeId: selectedEnvelopeId
+                preselectedEnvelope: selectedEnvelopeForTransaction
             )
         }
     }
@@ -252,6 +246,19 @@ struct EnvelopeCard: View {
         .padding(16)
         .background(Color(red: 0.08, green: 0.10, blue: 0.13))
         .cornerRadius(12)
+    }
+}
+
+// Wrapper view to pass preselected envelope to AddTransactionView
+struct AddTransactionViewWithEnvelope: View {
+    @Binding var isPresented: Bool
+    var preselectedEnvelope: EnvelopeModel?
+
+    var body: some View {
+        AddTransactionViewWithPreselection(
+            isPresented: $isPresented,
+            preselectedEnvelope: preselectedEnvelope
+        )
     }
 }
 

@@ -1,9 +1,4 @@
-//
-//  AppCoordinator.swift
-//  MicroBudget
-//
-//  Created by Sujana Dinuwara on 2025-11-17.
-//
+
 
 import SwiftUI
 

@@ -1,9 +1,4 @@
-//
-//  AddTransactionView.swift
-//  MicroBudget
-//
-//  Created by Sujana Dinuwara on 2025-11-17.
-//
+
 
 import SwiftUI
 
@@ -267,7 +262,7 @@ struct AddTransactionView: View {
 struct AddTransactionViewWithPreselection: View {
     @ObservedObject private var dataManager = DataManager.shared
     @Binding var isPresented: Bool
-    var preselectedEnvelopeId: UUID?
+    var preselectedEnvelope: EnvelopeModel?
 
     @State private var amount = ""
     @State private var selectedEnvelopeId: UUID?
@@ -277,18 +272,6 @@ struct AddTransactionViewWithPreselection: View {
     @State private var isIncome = false
     @State private var showError = false
     @State private var errorMessage = ""
-
-    init(isPresented: Binding<Bool>, preselectedEnvelopeId: UUID?) {
-        self._isPresented = isPresented
-        self.preselectedEnvelopeId = preselectedEnvelopeId
-        // Initialize selectedEnvelopeId with preselected envelope ID
-        if let envelopeId = preselectedEnvelopeId {
-            _selectedEnvelopeId = State(initialValue: envelopeId)
-            print("🎯 AddTransactionViewWithPreselection: Preselecting envelope ID: \(envelopeId)")
-        } else {
-            print("⚠️ AddTransactionViewWithPreselection: No envelope preselected")
-        }
-    }
 
     var body: some View {
         ZStack {
@@ -483,8 +466,10 @@ struct AddTransactionViewWithPreselection: View {
             }
         }
         .onAppear {
-            // If no envelope was preselected, select the first one
-            if selectedEnvelopeId == nil, let firstEnvelope = dataManager.envelopes.first {
+            // Set preselected envelope
+            if let envelope = preselectedEnvelope {
+                selectedEnvelopeId = envelope.id
+            } else if selectedEnvelopeId == nil, let firstEnvelope = dataManager.envelopes.first {
                 selectedEnvelopeId = firstEnvelope.id
             }
         }
